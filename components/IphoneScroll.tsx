@@ -2,6 +2,7 @@
 
 import { useScroll, useTransform, motion, useMotionValueEvent } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { useLenis } from "lenis/react";
 
 export default function IphoneScroll() {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -9,6 +10,8 @@ export default function IphoneScroll() {
     const [images, setImages] = useState<HTMLImageElement[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadProgress, setLoadProgress] = useState(0);
+
+    const lenis = useLenis();
 
     const { scrollYProgress } = useScroll({
         target: containerRef,
@@ -57,14 +60,16 @@ export default function IphoneScroll() {
     useEffect(() => {
         if (loading) {
             document.body.style.overflow = 'hidden';
-
+            lenis?.stop();
         } else {
             document.body.style.overflow = '';
+            lenis?.start();
         }
         return () => {
             document.body.style.overflow = '';
+            lenis?.start();
         }
-    }, [loading]);
+    }, [loading, lenis]);
 
     useMotionValueEvent(frameIndex, "change", (latest) => {
         const canvas = canvasRef.current;
