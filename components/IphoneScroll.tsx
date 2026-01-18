@@ -132,7 +132,7 @@ export default function IphoneScroll() {
     }, [images, frameIndex]);
 
     return (
-        <div ref={containerRef} className="relative h-[400vh] bg-[#050505]">
+        <div ref={containerRef} className="relative h-[800vh] bg-[#050505]">
             <div className="sticky top-0 h-screen w-full overflow-hidden">
 
                 <motion.div
