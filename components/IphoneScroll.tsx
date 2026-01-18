@@ -81,18 +81,22 @@ export default function IphoneScroll() {
         // Use "contain" logic.
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
-        const imgWidth = img.naturalWidth;
-        const imgHeight = img.naturalHeight;
 
-        // Scale to fit
-        const scale = Math.min(canvasWidth / imgWidth, canvasHeight / imgHeight);
-        const w = imgWidth * scale;
-        const h = imgHeight * scale;
+        // Crop watermark (bottom 20%)
+        const cropHeight = img.naturalHeight * 0.85;
+        const sWidth = img.naturalWidth;
+        const sHeight = cropHeight;
+
+        // Scale to fit based on CROPPED dimensions
+        const scale = Math.min(canvasWidth / sWidth, canvasHeight / sHeight);
+        const w = sWidth * scale;
+        const h = sHeight * scale;
         const x = (canvasWidth - w) / 2;
         const y = (canvasHeight - h) / 2;
 
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-        ctx.drawImage(img, x, y, w, h);
+        // drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+        ctx.drawImage(img, 0, 0, sWidth, sHeight, x, y, w, h);
     });
 
     // Re-render latest frame on resize (optional but good)
@@ -110,11 +114,17 @@ export default function IphoneScroll() {
 
                     if (!ctx || !img || !img.complete || img.naturalWidth === 0) return;
 
-                    const scale = Math.min(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
-                    const w = img.naturalWidth * scale;
-                    const h = img.naturalHeight * scale;
+                    // Crop watermark (bottom 20%)
+                    const cropHeight = img.naturalHeight * 0.85;
+                    const sWidth = img.naturalWidth;
+                    const sHeight = cropHeight;
+
+                    const scale = Math.min(canvas.width / sWidth, canvas.height / sHeight);
+                    const w = sWidth * scale;
+                    const h = sHeight * scale;
+
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+                    ctx.drawImage(img, 0, 0, sWidth, sHeight, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
                 }
             }
         }
@@ -126,53 +136,70 @@ export default function IphoneScroll() {
     return (
         <div ref={containerRef} className="relative h-[400vh] bg-[#050505]">
             <div className="sticky top-0 h-screen w-full overflow-hidden">
-                {loading && (
-                    <div className="absolute inset-0 flex items-center justify-center text-white/50 z-50">
-                        <div className="flex flex-col items-center gap-4">
-                            <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                            <p className="text-sm font-medium tracking-tight">Loading Experience... {Math.round(loadProgress)}%</p>
+
+                {/* Loader Overlay */}
+                <motion.div
+                    initial={{ opacity: 1 }}
+                    animate={{ opacity: loading ? 1 : 0 }}
+                    transition={{ duration: 0.8, ease: "easeInOut" }}
+                    className={`absolute inset-0 z-50 flex items-center justify-center bg-[#050505] ${!loading ? 'pointer-events-none' : ''}`}
+                >
+                    {loading && (
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="text-6xl font-bold text-white tracking-tighter tabular-nums">
+                                {Math.round(loadProgress)}%
+                            </div>
+                            <p className="text-sm text-white/40 font-medium uppercase tracking-[0.2em]">Loading Experience</p>
                         </div>
-                    </div>
-                )}
-
-                <canvas
-                    ref={canvasRef}
-                    className="block w-full h-full pointer-events-none"
-                />
-
-                {/* Text Overlays */}
-                {/* 0% Center */}
-                <motion.div style={{ opacity: opacity1 }} className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="text-center">
-                        <h2 className="text-6xl md:text-8xl font-semibold tracking-tighter text-white mb-2">iPhone 17 Pro</h2>
-                        <p className="text-2xl md:text-3xl font-medium text-white/60 tracking-tight">Crafted Beyond Limits</p>
-                    </div>
+                    )}
                 </motion.div>
 
-                {/* 30% Left */}
-                <motion.div style={{ opacity: opacity2 }} className="absolute inset-0 flex items-center justify-start px-12 md:px-32 pointer-events-none">
-                    <div className="text-left max-w-xl">
-                        <h2 className="text-5xl md:text-7xl font-semibold tracking-tighter text-white mb-4">Precision Engineering</h2>
-                        <p className="text-xl md:text-2xl font-medium text-white/60 leading-relaxed">Built at the Atomic Level. Every micron calibrated for absolute perfection.</p>
-                    </div>
-                </motion.div>
+                {/* Canvas & Content - Fades in slightly after loader */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: loading ? 0 : 1 }}
+                    transition={{ duration: 1, delay: 0.5 }}
+                    className="relative w-full h-full"
+                >
+                    <canvas
+                        ref={canvasRef}
+                        className="block w-full h-full pointer-events-none"
+                    />
 
-                {/* 60% Right */}
-                <motion.div style={{ opacity: opacity3 }} className="absolute inset-0 flex items-center justify-end px-12 md:px-32 pointer-events-none">
-                    <div className="text-right max-w-xl">
-                        <h2 className="text-5xl md:text-7xl font-semibold tracking-tighter text-white mb-4">Titanium Core</h2>
-                        <p className="text-xl md:text-2xl font-medium text-white/60 leading-relaxed">Next-Gen Silicon meeting aerospace-grade titanium. Lighter. Stronger. Faster.</p>
-                    </div>
-                </motion.div>
+                    {/* Text Overlays */}
+                    {/* 0% Center */}
+                    <motion.div style={{ opacity: opacity1 }} className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="text-center">
+                            <h2 className="text-6xl md:text-8xl font-semibold tracking-tighter text-white mb-2">iPhone 17 Pro</h2>
+                            <p className="text-2xl md:text-3xl font-medium text-white/60 tracking-tight">Crafted Beyond Limits</p>
+                        </div>
+                    </motion.div>
 
-                {/* 90% Center CTA */}
-                <motion.div style={{ opacity: opacity4 }} className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="text-center">
-                        <h2 className="text-6xl md:text-8xl font-semibold tracking-tighter text-white mb-8">Experience the Future</h2>
-                        <button className="px-8 py-4 bg-white text-black rounded-full font-semibold text-lg hover:scale-105 transition-transform duration-300 pointer-events-auto cursor-pointer">
-                            Pre-order Now
-                        </button>
-                    </div>
+                    {/* 30% Left */}
+                    <motion.div style={{ opacity: opacity2 }} className="absolute inset-0 flex items-center justify-start px-12 md:px-32 pointer-events-none">
+                        <div className="text-left max-w-xl">
+                            <h2 className="text-5xl md:text-7xl font-semibold tracking-tighter text-white mb-4">Precision Engineering</h2>
+                            <p className="text-xl md:text-2xl font-medium text-white/60 leading-relaxed">Built at the Atomic Level. Every micron calibrated for absolute perfection.</p>
+                        </div>
+                    </motion.div>
+
+                    {/* 60% Right */}
+                    <motion.div style={{ opacity: opacity3 }} className="absolute inset-0 flex items-center justify-end px-12 md:px-32 pointer-events-none">
+                        <div className="text-right max-w-xl">
+                            <h2 className="text-5xl md:text-7xl font-semibold tracking-tighter text-white mb-4">Titanium Core</h2>
+                            <p className="text-xl md:text-2xl font-medium text-white/60 leading-relaxed">Next-Gen Silicon meeting aerospace-grade titanium. Lighter. Stronger. Faster.</p>
+                        </div>
+                    </motion.div>
+
+                    {/* 90% Center CTA */}
+                    <motion.div style={{ opacity: opacity4 }} className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="text-center">
+                            <h2 className="text-6xl md:text-8xl font-semibold tracking-tighter text-white mb-8">Experience the Future</h2>
+                            <button className="px-8 py-4 bg-white text-black rounded-full font-semibold text-lg hover:scale-105 transition-transform duration-300 pointer-events-auto cursor-pointer">
+                                Pre-order Now
+                            </button>
+                        </div>
+                    </motion.div>
                 </motion.div>
             </div>
         </div>
