@@ -84,8 +84,8 @@ export default function IphoneScroll() {
         const imgWidth = img.naturalWidth;
         const imgHeight = img.naturalHeight;
 
-        // Scale to fit (multiplied by 1.2 to zoom in and crop out watermarks/edges)
-        const scale = Math.min(canvasWidth / imgWidth, canvasHeight / imgHeight) * 1.2;
+        // Scale to fit
+        const scale = Math.min(canvasWidth / imgWidth, canvasHeight / imgHeight);
         const w = imgWidth * scale;
         const h = imgHeight * scale;
         const x = (canvasWidth - w) / 2;
@@ -110,8 +110,7 @@ export default function IphoneScroll() {
 
                     if (!ctx || !img || !img.complete || img.naturalWidth === 0) return;
 
-                    // Apply same zoom here
-                    const scale = Math.min(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight) * 1.2;
+                    const scale = Math.min(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
                     const w = img.naturalWidth * scale;
                     const h = img.naturalHeight * scale;
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
