@@ -10,22 +10,18 @@ export default function IphoneScroll() {
     const [loading, setLoading] = useState(true);
     const [loadProgress, setLoadProgress] = useState(0);
 
-    // Scroll progress for the entire 400vh section
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start start", "end end"],
     });
 
-    // Map scroll progress to frame index (0 to 79)
     const frameIndex = useTransform(scrollYProgress, [0, 1], [0, 79]);
 
-    // Opacity transforms for text layers
     const opacity1 = useTransform(scrollYProgress, [0, 0.2, 0.25], [1, 1, 0]);
     const opacity2 = useTransform(scrollYProgress, [0.25, 0.3, 0.5, 0.55], [0, 1, 1, 0]);
     const opacity3 = useTransform(scrollYProgress, [0.55, 0.6, 0.8, 0.85], [0, 1, 1, 0]);
     const opacity4 = useTransform(scrollYProgress, [0.85, 0.9, 1], [0, 1, 1]);
 
-    // Preload images
     useEffect(() => {
         const loadImages = async () => {
             const loadedImages: HTMLImageElement[] = [];
@@ -34,12 +30,9 @@ export default function IphoneScroll() {
 
             for (let i = 0; i < frameCount; i++) {
                 const img = new Image();
-                // Images are in public/iphone17blackvid_000/
-                // Naming format: iphone17blackvid_000.jpg
                 const frameNumber = i.toString().padStart(3, '0');
                 const src = `/iphone17blackvid_000/iphone17blackvid_${frameNumber}.jpg`;
 
-                // Wait for image to load to ensure order (or promise.all parallel)
                 img.src = src;
                 await new Promise((resolve, reject) => {
                     img.onload = () => {
@@ -48,7 +41,6 @@ export default function IphoneScroll() {
                         resolve(true);
                     }
                     img.onerror = () => {
-                        // Fallback or just resolve to continue
                         console.warn(`Failed to load frame ${i}`);
                         resolve(true);
                     }
@@ -62,7 +54,18 @@ export default function IphoneScroll() {
         loadImages();
     }, []);
 
-    // Render logic
+    useEffect(() => {
+        if (loading) {
+            document.body.style.overflow = 'hidden';
+
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        }
+    }, [loading]);
+
     useMotionValueEvent(frameIndex, "change", (latest) => {
         const canvas = canvasRef.current;
         if (!canvas || images.length === 0) return;
@@ -72,22 +75,16 @@ export default function IphoneScroll() {
 
         const index = Math.min(Math.round(latest), images.length - 1);
         const img = images[index];
-        // console.log("Rendering frame:", index, "Scroll:", latest); 
 
         if (!img || !img.complete || img.naturalWidth === 0) return;
 
-        // Draw image maintaining aspect ratio and centering
-        // For this demo, assuming 1920x1080 frames or similar.
-        // Use "contain" logic.
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
 
-        // Crop watermark (bottom 20%)
         const cropHeight = img.naturalHeight * 0.85;
         const sWidth = img.naturalWidth;
         const sHeight = cropHeight;
 
-        // Scale to fit based on CROPPED dimensions
         const scale = Math.min(canvasWidth / sWidth, canvasHeight / sHeight);
         const w = sWidth * scale;
         const h = sHeight * scale;
@@ -95,17 +92,14 @@ export default function IphoneScroll() {
         const y = (canvasHeight - h) / 2;
 
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-        // drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
         ctx.drawImage(img, 0, 0, sWidth, sHeight, x, y, w, h);
     });
 
-    // Re-render latest frame on resize (optional but good)
     useEffect(() => {
         const resize = () => {
             if (canvasRef.current) {
                 canvasRef.current.width = window.innerWidth;
                 canvasRef.current.height = window.innerHeight;
-                // Force redraw of current frame
                 const currentFrame = Math.round(frameIndex.get());
                 if (images[currentFrame]) {
                     const canvas = canvasRef.current;
@@ -114,7 +108,6 @@ export default function IphoneScroll() {
 
                     if (!ctx || !img || !img.complete || img.naturalWidth === 0) return;
 
-                    // Crop watermark (bottom 20%)
                     const cropHeight = img.naturalHeight * 0.85;
                     const sWidth = img.naturalWidth;
                     const sHeight = cropHeight;
@@ -129,7 +122,7 @@ export default function IphoneScroll() {
             }
         }
         window.addEventListener('resize', resize);
-        resize(); // Initial sizing
+        resize();
         return () => window.removeEventListener('resize', resize);
     }, [images, frameIndex]);
 
@@ -137,7 +130,6 @@ export default function IphoneScroll() {
         <div ref={containerRef} className="relative h-[400vh] bg-[#050505]">
             <div className="sticky top-0 h-screen w-full overflow-hidden">
 
-                {/* Loader Overlay */}
                 <motion.div
                     initial={{ opacity: 1 }}
                     animate={{ opacity: loading ? 1 : 0 }}
@@ -154,7 +146,6 @@ export default function IphoneScroll() {
                     )}
                 </motion.div>
 
-                {/* Canvas & Content - Fades in slightly after loader */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: loading ? 0 : 1 }}
@@ -166,8 +157,6 @@ export default function IphoneScroll() {
                         className="block w-full h-full pointer-events-none"
                     />
 
-                    {/* Text Overlays */}
-                    {/* 0% Center */}
                     <motion.div style={{ opacity: opacity1 }} className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="text-center">
                             <h2 className="text-6xl md:text-8xl font-semibold tracking-tighter text-white mb-2">iPhone 17 Pro</h2>
@@ -175,7 +164,6 @@ export default function IphoneScroll() {
                         </div>
                     </motion.div>
 
-                    {/* 30% Left */}
                     <motion.div style={{ opacity: opacity2 }} className="absolute inset-0 flex items-center justify-start px-12 md:px-32 pointer-events-none">
                         <div className="text-left max-w-xl">
                             <h2 className="text-5xl md:text-7xl font-semibold tracking-tighter text-white mb-4">Precision Engineering</h2>
@@ -183,7 +171,6 @@ export default function IphoneScroll() {
                         </div>
                     </motion.div>
 
-                    {/* 60% Right */}
                     <motion.div style={{ opacity: opacity3 }} className="absolute inset-0 flex items-center justify-end px-12 md:px-32 pointer-events-none">
                         <div className="text-right max-w-xl">
                             <h2 className="text-5xl md:text-7xl font-semibold tracking-tighter text-white mb-4">Titanium Core</h2>
@@ -191,7 +178,6 @@ export default function IphoneScroll() {
                         </div>
                     </motion.div>
 
-                    {/* 90% Center CTA */}
                     <motion.div style={{ opacity: opacity4 }} className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="text-center">
                             <h2 className="text-6xl md:text-8xl font-semibold tracking-tighter text-white mb-8">Experience the Future</h2>

@@ -81,7 +81,7 @@ export default function Home() {
 
       {/* 4. Footer */}
       <footer className="py-12 border-t border-white/5 text-center">
-        <p className="text-sm text-white/30 font-medium">© 2026 Zenith Labs. Concept Experience.</p>
+        <p className="text-sm text-white/30 font-medium">© 2026 Meethios Labs. Concept Experience.</p>
       </footer>
     </main>
   );
